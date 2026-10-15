@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Studio - 인포그래픽, 4컷 만화 & 슬라이드 스튜디오</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- JSZip & FileSaver for Zip functionality -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- Google SF-style Font (Inter & Noto Sans KR) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans KR', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          colors: {
+            apple: {
+              bgLight: '#f5f5f7',
+              bgDark: '#0b0f17',
+              cardLight: 'rgba(255, 255, 255, 0.75)',
+              cardDark: 'rgba(18, 24, 38, 0.75)',
+              blue: '#0071e3',
+              blueHover: '#0077ed',
+              purple: '#6366f1',
+              indigo: '#4f46e5'
+            }
+          },
+          boxShadow: {
+            'apple': '0 10px 30px -10px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04)',
+            'apple-dark': '0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.05)',
+            'glow': '0 0 25px rgba(79, 70, 229, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.6);
+    }
+    
+    /* Apple SF Glass Effect */
+    .glass-panel {
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    
+    /* Subtle Pulse Effects */
+    .pulse-ring {
+      box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+      animation: pulseRing 2s infinite;
+    }
+    @keyframes pulseRing {
+      0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+      70% { box-shadow: 0 0 0 12px rgba(79, 70, 229, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+    }
+  </style>
+</head>
+
+<body class="bg-apple-bgLight dark:bg-apple-bgDark text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-300 antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Apple-style Navigation Header -->
+  <header class="sticky top-0 z-40 glass-panel border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/70 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Logo & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-teal-500 flex items-center justify-center shadow-md shadow-indigo-500/20 text-white font-bold text-lg">
+          <i class="fa-solid fa-sparkles"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            AI Visual Studio
+            <span class="text-[10px] font-semibold tracking-normal px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700/50">Pro 3.0</span>
+          </h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">인포그래픽 / 4컷 만화 / 프레젠테이션 슬라이드 AI 제작소</p>
+        </div>
+      </div>
+      
+      <!-- Right Utility Actions -->
+      <div class="flex items-center space-x-3">
+        <!-- AI Engine Indicator -->
+        <div class="hidden md:flex items-center space-x-2 text-xs bg-slate-100 dark:bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="font-medium">Gemini 3.1 Flash Image</span>
+        </div>
+
+        <!-- History Counter Button -->
+        <button id="scrollToHistoryBtn" class="text-xs sm:text-sm bg-slate-200/80 dark:bg-slate-800/80 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium px-3.5 py-2 rounded-xl transition flex items-center gap-2 border border-slate-300/60 dark:border-slate-700">
+          <i class="fa-solid fa-clock-rotate-left text-indigo-500"></i>
+          <span>히스토리</span>
+          <span id="historyBadge" class="bg-indigo-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+        </button>
+
+        <!-- Dark / Light Theme Toggle -->
+        <button onclick="toggleTheme()" id="themeToggleBtn" aria-label="Dark mode toggle" title="다크/라이트 모드 전환"
+          class="w-9 h-9 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center transition border border-slate-300/60 dark:border-slate-700">
+          <i class="fa-solid fa-moon dark:hidden text-slate-700 text-sm"></i>
+          <i class="fa-solid fa-sun hidden dark:block text-amber-400 text-sm"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Workspace Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- =================================================================== -->
+      <!-- Left Column: Settings, Manuscript & Prompt Control (7 Cols) -->
+      <!-- =================================================================== -->
+      <section class="lg:col-span-7 space-y-6">
+        
+        <!-- 1. Mode Selection (3-Way Segmented Control) -->
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-apple dark:shadow-apple-dark transition-all">
+          <div class="flex items-center justify-between mb-3">
+            <label class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+              1. 생성 모드 선택 (Mode)
+            </label>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium" id="modeDescription">
+              📊 도표/차트 시각화 인포그래픽
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-100 dark:bg-slate-950/80 p-1.5 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+            <!-- 1. Infographic Button -->
+            <button id="modeInfographic" type="button" onclick="setMode('infographic')" 
+              class="relative flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md">
+              <i class="fa-solid fa-chart-pie text-base"></i>
+              <span>📊 도표 인포그래픽</span>
+            </button>
+            
+            <!-- 2. Comic Button -->
+            <button id="modeComic" type="button" onclick="setMode('comic')" 
+              class="relative flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+              <i class="fa-solid fa-book-open text-amber-500 text-base"></i>
+              <span>🎨 4컷 만화</span>
+            </button>
+
+            <!-- 3. Presentation Slide Button -->
+            <button id="modeSlide" type="button" onclick="setMode('slide')" 
+              class="relative flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+              <i class="fa-solid fa-desktop text-teal-500 text-base"></i>
+              <span>🖥️ 슬라이드 생성</span>
+            </button>
+          </div>
+
+          <!-- Dynamic Preset Chip Selector for Comic Mode -->
+          <div id="comicStylePresetSection" class="hidden mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/80 space-y-2">
+            <span class="text-xs text-slate-500 dark:text-slate-400 font-medium block">
+              <i class="fa-solid fa-palette text-amber-500 mr-1"></i> 만화 스타일 디폴트 프리셋 선택:
+            </span>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button type="button" onclick="setComicPreset('ghibli')" id="presetGhibli"
+                class="preset-btn px-3 py-2 rounded-xl border text-xs font-medium transition flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500 text-indigo-600 dark:text-indigo-300">
+                🌿 지브리 (Ghibli)
+              </button>
+              <button type="button" onclick="setComicPreset('simple')" id="presetSimple"
+                class="preset-btn px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 text-xs font-medium transition hover:border-slate-400 flex items-center justify-center gap-1.5">
+                ✏️ 간단한 만화
+              </button>
+              <button type="button" onclick="setComicPreset('anime')" id="presetAnime"
+                class="preset-btn px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 text-xs font-medium transition hover:border-slate-400 flex items-center justify-center gap-1.5">
+                ✨ 일본 애니메이션
+              </button>
+              <button type="button" onclick="setComicPreset('webtoon')" id="presetWebtoon"
+                class="preset-btn px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 text-xs font-medium transition hover:border-slate-400 flex items-center justify-center gap-1.5">
+                🔥 한국 웹툰 (반실사)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Text Manuscript Input -->
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-apple dark:shadow-apple-dark space-y-3">
+          <div class="flex items-center justify-between">
+            <label for="manuscript" class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-file-alt text-indigo-500"></i>
+              <span>2. 텍스트 원고 / 데이터 입력</span>
+            </label>
+            <span class="text-xs text-slate-400" id="manuscriptLength">0자</span>
+          </div>
+          
+          <textarea id="manuscript" rows="4" 
+            placeholder="인포그래픽, 4컷 만화, 또는 슬라이드로 변환할 원고, 기사, 데이터를 입력하세요.&#10;예: [2026 AI 산업 요약] - 생성형 AI 도입률 68% 증가, 기업 업무 생산성 40% 개선, 클라우드 인프라 전환율 75% 기록..."
+            class="w-full bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-2xl p-4 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none transition resize-y"></textarea>
+          
+          <!-- Auto Prompt Generation Button -->
+          <button id="generatePromptBtn" onclick="handleGeneratePrompt()" 
+            class="w-full bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-medium py-3 px-4 rounded-2xl transition flex items-center justify-center gap-2 shadow-md active:scale-[0.99] border border-slate-800 dark:border-slate-700">
+            <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+            <span>선택 모드 기반 프롬프트 자동 분석 생성</span>
+          </button>
+        </div>
+
+        <!-- 3. Final Prompt Customization -->
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-apple dark:shadow-apple-dark space-y-3">
+          <div class="flex items-center justify-between">
+            <label for="prompt" class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-terminal text-emerald-500"></i>
+              <span>3. 최종 이미지를 위한 프롬프트</span>
+            </label>
+            <button type="button" onclick="clearPrompt()" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+              <i class="fa-solid fa-rotate-left"></i> 초기화
+            </button>
+          </div>
+          
+          <textarea id="prompt" rows="3" 
+            placeholder="상단의 분석 버튼을 클릭하거나 직접 세부 스타일 및 구성을 수정 입력하세요."
+            class="w-full bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-2xl p-4 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none transition resize-y"></textarea>
+
+          <!-- Style Preset Quick Chips -->
+          <div class="space-y-1.5">
+            <span class="text-[11px] text-slate-400 font-medium block">빠른 스타일 키워드 추가:</span>
+            <div id="styleChips" class="flex flex-wrap gap-1.5">
+              <!-- Rendered via JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Aspect Ratio Selection (16:9 Default) -->
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-apple dark:shadow-apple-dark space-y-3">
+          <label class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-expand text-indigo-500"></i>
+            <span>4. 화면 비율 선택 (Aspect Ratio)</span>
+          </label>
+          
+          <div class="grid grid-cols-5 gap-2" id="ratioGrid">
+            <!-- 16:9 (Default) -->
+            <button type="button" onclick="setAspectRatio('16:9')" data-ratio="16:9" 
+              class="ratio-btn bg-indigo-50 dark:bg-indigo-950/60 border-indigo-500 text-indigo-600 dark:text-white border-2 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 transition shadow-sm">
+              <div class="w-8 h-4 border-2 border-indigo-500 rounded-sm bg-indigo-500/20"></div>
+              <span class="text-xs font-bold">16:9</span>
+              <span class="text-[9px] text-indigo-600 dark:text-indigo-300 font-medium">슬라이드/기본</span>
+            </button>
+            
+            <!-- 1:1 (정사각형) -->
+            <button type="button" onclick="setAspectRatio('1:1')" data-ratio="1:1" 
+              class="ratio-btn bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 border-2 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 hover:border-slate-400 transition">
+              <div class="w-5 h-5 border-2 border-slate-400 rounded-sm bg-slate-300/20"></div>
+              <span class="text-xs font-bold">1:1</span>
+              <span class="text-[9px] text-slate-400">정사각형</span>
+            </button>
+
+            <!-- 3:4 -->
+            <button type="button" onclick="setAspectRatio('3:4')" data-ratio="3:4" 
+              class="ratio-btn bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 border-2 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 hover:border-slate-400 transition">
+              <div class="w-4 h-5 border-2 border-slate-400 rounded-sm bg-slate-300/20"></div>
+              <span class="text-xs font-bold">3:4</span>
+              <span class="text-[9px] text-slate-400">세로</span>
+            </button>
+
+            <!-- 9:16 -->
+            <button type="button" onclick="setAspectRatio('9:16')" data-ratio="9:16" 
+              class="ratio-btn bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 border-2 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 hover:border-slate-400 transition">
+              <div class="w-3.5 h-6 border-2 border-slate-400 rounded-sm bg-slate-300/20"></div>
+              <span class="text-xs font-bold">9:16</span>
+              <span class="text-[9px] text-slate-400">모바일</span>
+            </button>
+
+            <!-- 4:3 -->
+            <button type="button" onclick="setAspectRatio('4:3')" data-ratio="4:3" 
+              class="ratio-btn bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 border-2 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 hover:border-slate-400 transition">
+              <div class="w-6 h-4.5 border-2 border-slate-400 rounded-sm bg-slate-300/20"></div>
+              <span class="text-xs font-bold">4:3</span>
+              <span class="text-[9px] text-slate-400">일반</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3-Way Independent Generation Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- 1. Infographic Generate Button -->
+          <button id="generateInfographicBtn" onclick="handleGenerateImage('infographic')" 
+            class="py-3.5 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 active:from-indigo-800 text-white font-bold text-xs sm:text-sm shadow-lg shadow-indigo-600/25 transition duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 border border-indigo-500/30">
+            <i class="fa-solid fa-chart-pie text-base"></i>
+            <span>📊 도표 인포그래픽 생성</span>
+          </button>
+
+          <!-- 2. Comic Generate Button -->
+          <button id="generateComicBtn" onclick="handleGenerateImage('comic')" 
+            class="py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 active:from-amber-700 text-white font-bold text-xs sm:text-sm shadow-lg shadow-amber-500/25 transition duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 border border-amber-400/30">
+            <i class="fa-solid fa-book-open text-base"></i>
+            <span>🎨 4컷 만화 생성</span>
+          </button>
+
+          <!-- 3. Slide Generate Button -->
+          <button id="generateSlideBtn" onclick="handleGenerateImage('slide')" 
+            class="py-3.5 px-4 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 active:from-teal-700 text-white font-bold text-xs sm:text-sm shadow-lg shadow-teal-500/25 transition duration-200 transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 border border-teal-400/30">
+            <i class="fa-solid fa-desktop text-base"></i>
+            <span>🖥️ 슬라이드 생성</span>
+          </button>
+        </div>
+
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- Right Column: Canvas Live Preview (5 Cols Sticky) -->
+      <!-- =================================================================== -->
+      <section class="lg:col-span-5 sticky top-20">
+        <div class="glass-panel bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-apple dark:shadow-apple-dark min-h-[580px] flex flex-col">
+          
+          <!-- Canvas Top Bar -->
+          <div class="flex items-center justify-between pb-4 border-b border-slate-200/60 dark:border-slate-800/80 mb-4">
+            <h2 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-display text-indigo-500"></i>
+              <span>생성 비주얼 캔버스</span>
+            </h2>
+            <div id="previewMeta" class="hidden flex items-center gap-1.5">
+              <span id="previewBadgeMode" class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">
+                인포그래픽
+              </span>
+              <span id="previewBadgeRatio" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                16:9
+              </span>
+            </div>
+          </div>
+
+          <!-- Interactive Viewport Canvas -->
+          <div class="flex-1 flex flex-col items-center justify-center relative rounded-2xl bg-slate-100/80 dark:bg-slate-950/80 border border-slate-200/60 dark:border-slate-800/80 p-4 min-h-[400px] overflow-hidden">
+            
+            <!-- Default Placeholder State -->
+            <div id="placeholderState" class="text-center space-y-3 max-w-xs px-4">
+              <div class="w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center mx-auto text-slate-400 shadow-sm">
+                <i class="fa-solid fa-image-polaroid text-3xl"></i>
+              </div>
+              <div>
+                <h3 class="text-slate-700 dark:text-slate-200 font-bold text-sm">생성 대기 중</h3>
+                <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                  원고를 입력하고 <strong>[도표 인포그래픽]</strong>, <strong>[4컷 만화]</strong>, <strong>[슬라이드]</strong> 중 원하는 생성 버튼을 누르세요.
+                </p>
+              </div>
+            </div>
+
+            <!-- Loading Spinner State -->
+            <div id="loadingState" class="hidden text-center space-y-4">
+              <div class="relative w-16 h-16 mx-auto">
+                <div class="w-16 h-16 rounded-full border-4 border-indigo-500/20 border-t-indigo-600 animate-spin"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <i class="fa-solid fa-sparkles text-indigo-500 text-lg animate-pulse"></i>
+                </div>
+              </div>
+              <div>
+                <h3 id="loadingTitle" class="text-slate-800 dark:text-slate-100 font-bold text-sm">AI 이미지를 생성하는 중...</h3>
+                <p id="loadingSubtitle" class="text-xs text-slate-400 mt-1">
+                  선택한 모드의 디자인 구도를 계산하고 있습니다. (약 5~15초)
+                </p>
+              </div>
+            </div>
+
+            <!-- Active Generated Image View -->
+            <div id="resultState" class="hidden w-full h-full flex flex-col items-center justify-center">
+              <img id="renderedImage" src="" alt="AI Generated Graphic" class="max-h-[460px] w-auto object-contain rounded-xl shadow-xl transition duration-300 hover:scale-[1.01]" />
+            </div>
+
+          </div>
+
+          <!-- Bottom Action Toolbar -->
+          <div id="resultToolbar" class="hidden mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+            <div class="text-[11px] text-slate-400 truncate max-w-[160px]" id="resultTime">
+              방금 생성됨
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <button onclick="copyCurrentPrompt()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5 font-medium">
+                <i class="fa-regular fa-copy"></i>
+                <span>프롬프트 복사</span>
+              </button>
+              <button onclick="downloadCurrentImage()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-md">
+                <i class="fa-solid fa-download"></i>
+                <span>PNG 저장</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- Bottom Section: History Gallery & Batch ZIP Downloader -->
+    <!-- =================================================================== -->
+    <section id="historySection" class="pt-8 border-t border-slate-200/80 dark:border-slate-800/80 space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 p-5 rounded-3xl shadow-apple dark:shadow-apple-dark">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-indigo-500"></i>
+            <span>생성 히스토리 및 일괄 ZIP 다운로드</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            생성했던 모든 도표, 만화, 슬라이드가 저장되며, 여러 항목을 선택하여 한 번에 압축 다운로드할 수 있습니다.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Select All Toggle -->
+          <button id="selectAllBtn" onclick="toggleSelectAll()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5">
+            <i class="fa-regular fa-square-check"></i>
+            <span id="selectAllText">전체 선택</span>
+          </button>
+          
+          <!-- Download Selected ZIP Button -->
+          <button id="downloadZipBtn" onclick="downloadSelectedZip()" disabled 
+            class="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center gap-2 shadow-md disabled:shadow-none border border-emerald-500/30">
+            <i class="fa-solid fa-file-zipper"></i>
+            <span>선택 항목 ZIP 다운로드</span>
+            <span id="selectedCountBadge" class="bg-emerald-800 text-white px-1.5 py-0.5 rounded-md text-[10px] font-bold">0</span>
+          </button>
+
+          <!-- Clear History Button -->
+          <button onclick="confirmClearHistory()" title="전체 히스토리 삭제" class="bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-300 text-xs font-medium px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-800/50 transition">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- History Items Grid -->
+      <div id="historyGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        <!-- Injected dynamically via JS -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyHistoryState" class="text-center py-12 glass-panel bg-white/40 dark:bg-slate-900/40 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 space-y-2">
+        <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+          <i class="fa-solid fa-box-open text-xl"></i>
+        </div>
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">저장된 히스토리가 없습니다.</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500">원고를 기반으로 이미지를 생성하면 이곳에 저장됩니다.</p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Modal Lightbox Preview -->
+  <div id="imageModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="relative max-w-4xl w-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      
+      <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span id="modalTypeBadge" class="text-xs px-2.5 py-1 rounded-full bg-indigo-600 text-white font-semibold">인포그래픽</span>
+          <span id="modalRatioBadge" class="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">16:9</span>
+          <span id="modalDate" class="text-xs text-slate-400 ml-2"></span>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-2 text-xl transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-auto p-4 flex items-center justify-center bg-slate-100 dark:bg-slate-950">
+        <img id="modalImg" src="" alt="Full Preview" class="max-h-[70vh] object-contain rounded-xl shadow-lg" />
+      </div>
+
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
+        <div>
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">프롬프트 상세</label>
+          <p id="modalPrompt" class="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 max-h-24 overflow-y-auto select-all"></p>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button id="modalDownloadBtn" onclick="" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center gap-2">
+            <i class="fa-solid fa-download"></i> PNG 다운로드
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification Box -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 dark:bg-slate-800 text-white border border-slate-800 dark:border-slate-700 px-4 py-3 rounded-2xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3 max-w-md">
+    <div id="toastIcon" class="text-indigo-400 text-lg"><i class="fa-solid fa-circle-info"></i></div>
+    <div id="toastMessage" class="text-xs font-medium">메시지 내용</div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       State Management
+       ========================================================================== */
+    const STATE = {
+      mode: 'infographic',     // 'infographic' | 'comic' | 'slide'
+      comicPreset: 'ghibli',   // 'ghibli' | 'simple' | 'anime' | 'webtoon'
+      aspectRatio: '16:9',      // '16:9' | '1:1' | '3:4' | '9:16' | '4:3'
+      manuscript: '',
+      prompt: '',
+      currentImage: null,
+      history: [],
+      selectedIds: new Set()
+    };
+
+    // Style presets for quick addition per mode
+    const STYLES = {
+      infographic: [
+        '📊 차트 & 타이포그래피 중심 (Data Charts)',
+        '📐 아이소메트릭 3D 도표 (Isometric Diagram)',
+        '💼 깔끔한 플랫 베터 그래픽 (Modern Flat Vector)',
+        '🔄 프로세스 플로우차트 (Process Flowchart)',
+        '🎨 파스텔 모듈 인포그래픽 (Pastel Modular)'
+      ],
+      comic: [
+        '🌿 지브리 애니메이션 감성 (Ghibli Aesthetic)',
+        '✏️ 간단한 미니멀 4컷 만화 (Simple Cartoon Panel)',
+        '✨ 화려한 일본 애니 연출 (Japanese Anime Style)',
+        '🔥 한국형 웹툰 반실사 채색 (Korean Webtoon Realism)'
+      ],
+      slide: [
+        '🖥️ 모던 스타트업 피치덱 (Modern Startup Deck)',
+        '💼 비즈니스 임원진 브리핑 (Executive Deck)',
+        '✨ 테크 아크릴 다크모드 (Tech Dark Mode)',
+        '🎨 깔끔한 카드 레이아웃 (Visual Grid Deck)',
+        '📈 핵심 성과 매트릭스 슬라이드 (Key Metrics Presentation)'
+      ]
+    };
+
+    /* ==========================================================================
+       Initialization
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      loadHistoryFromStorage();
+      renderStyleChips();
+      setupEventListeners();
+      updateHistoryUI();
+    });
+
+    function setupEventListeners() {
+      const manuscriptInput = document.getElementById('manuscript');
+      manuscriptInput.addEventListener('input', (e) => {
+        STATE.manuscript = e.target.value;
+        document.getElementById('manuscriptLength').textContent = `${e.target.value.length}자`;
+      });
+
+      document.getElementById('prompt').addEventListener('input', (e) => {
+        STATE.prompt = e.target.value;
+      });
+
+      document.getElementById('scrollToHistoryBtn').addEventListener('click', () => {
+        document.getElementById('historySection').scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+
+    /* ==========================================================================
+       Theme Toggle (Dark / Light Mode)
+       ========================================================================== */
+    function initTheme() {
+      const savedTheme = localStorage.getItem('visual_studio_theme');
+      if (savedTheme === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('visual_studio_theme', isDark ? 'dark' : 'light');
+      showToast(isDark ? '🌙 다크 모드로 전환되었습니다.' : '☀️ 라이트 모드로 전환되었습니다.');
+    }
+
+    /* ==========================================================================
+       Mode & Preset Controls
+       ========================================================================== */
+    function setMode(newMode) {
+      STATE.mode = newMode;
+      
+      const infographicBtn = document.getElementById('modeInfographic');
+      const comicBtn = document.getElementById('modeComic');
+      const slideBtn = document.getElementById('modeSlide');
+      const comicPresetSection = document.getElementById('comicStylePresetSection');
+      const modeDesc = document.getElementById('modeDescription');
+
+      // Reset styles
+      const inactiveClass = "relative flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white";
+
+      infographicBtn.className = inactiveClass;
+      comicBtn.className = inactiveClass;
+      slideBtn.className = inactiveClass;
+
+      if (newMode === 'infographic') {
+        infographicBtn.className = "relative flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md";
+        comicPresetSection.classList.add('hidden');
+        modeDesc.textContent = "📊 도표/차트 시각화 인포그래픽";
+      } else if (newMode === 'comic') {
+        comicBtn.className = "relative flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 bg-white dark:bg-amber-600 text-amber-600 dark:text-white shadow-md";
+        comicPresetSection.classList.remove('hidden');
+        modeDesc.textContent = "🎨 4컷 만화 / 웹툰 스토리보드";
+      } else if (newMode === 'slide') {
+        slideBtn.className = "relative flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 bg-white dark:bg-teal-600 text-teal-600 dark:text-white shadow-md";
+        comicPresetSection.classList.add('hidden');
+        modeDesc.textContent = "🖥️ 프레젠테이션 피치덱 슬라이드";
+      }
+
+      renderStyleChips();
+      
+      const modeNames = {
+        infographic: '📊 도표 인포그래픽',
+        comic: '🎨 4컷 만화',
+        slide: '🖥️ 슬라이드 생성'
+      };
+      showToast(`${modeNames[newMode]} 모드가 선택되었습니다.`);
+    }
+
+    function setComicPreset(preset) {
+      STATE.comicPreset = preset;
+      
+      const presetButtons = document.querySelectorAll('.preset-btn');
+      presetButtons.forEach(btn => {
+        btn.className = "preset-btn px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 text-xs font-medium transition hover:border-slate-400 flex items-center justify-center gap-1.5";
+      });
+
+      const activeMap = {
+        ghibli: 'presetGhibli',
+        simple: 'presetSimple',
+        anime: 'presetAnime',
+        webtoon: 'presetWebtoon'
+      };
+
+      const activeBtn = document.getElementById(activeMap[preset]);
+      if (activeBtn) {
+        activeBtn.className = "preset-btn px-3 py-2 rounded-xl border text-xs font-medium transition flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500 text-indigo-600 dark:text-indigo-300 shadow-sm";
+      }
+
+      showToast(`만화 스타일: '${preset.toUpperCase()}' 디폴트 지정`);
+    }
+
+    function setAspectRatio(ratio) {
+      STATE.aspectRatio = ratio;
+      const ratioButtons = document.querySelectorAll('.ratio-btn');
+      
+      ratioButtons.forEach(btn => {
+        const btnRatio = btn.getAttribute('data-ratio');
+        if (btnRatio === ratio) {
+          btn.className = "ratio-btn bg-indigo-50 dark:bg-indigo-950/60 border-indigo-500 text-indigo-600 dark:text-white border-2 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 transition shadow-sm";
+          const innerBox = btn.querySelector('div');
+          if(innerBox) innerBox.className = innerBox.className.replace(/border-slate-\d+/, 'border-indigo-500').replace(/bg-slate-\d+\/\d+/, 'bg-indigo-500/20');
+        } else {
+          btn.className = "ratio-btn bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 border-2 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 hover:border-slate-400 transition";
+          const innerBox = btn.querySelector('div');
+          if(innerBox) innerBox.className = innerBox.className.replace(/border-indigo-\d+/, 'border-slate-400').replace(/bg-indigo-\d+\/\d+/, 'bg-slate-300/20');
+        }
+      });
+    }
+
+    function renderStyleChips() {
+      const container = document.getElementById('styleChips');
+      const list = STYLES[STATE.mode] || [];
+      
+      container.innerHTML = list.map(style => `
+        <button type="button" onclick="appendStylePrompt('${style}')" 
+          class="text-[11px] bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-xl transition flex items-center gap-1">
+          <i class="fa-solid fa-plus text-[9px] text-indigo-500"></i>
+          <span>${style}</span>
+        </button>
+      `).join('');
+    }
+
+    function appendStylePrompt(styleText) {
+      const promptTextarea = document.getElementById('prompt');
+      const currentVal = promptTextarea.value.trim();
+      
+      if (currentVal) {
+        promptTextarea.value = `${currentVal}, ${styleText}`;
+      } else {
+        promptTextarea.value = `${styleText}`;
+      }
+      STATE.prompt = promptTextarea.value;
+      showToast(`키워드 추가됨: ${styleText}`);
+    }
+
+    function clearPrompt() {
+      document.getElementById('prompt').value = '';
+      STATE.prompt = '';
+    }
+
+    /* ==========================================================================
+       STREAMING_CHUNK:Gemini Prompt Generation API Call...
+       ========================================================================== */
+    async function handleGeneratePrompt() {
+      const manuscriptText = STATE.manuscript.trim();
+      if (!manuscriptText) {
+        showToast('텍스트 원고를 먼저 입력해주세요.', 'warning');
+        document.getElementById('manuscript').focus();
+        return;
+      }
+
+      const generatePromptBtn = document.getElementById('generatePromptBtn');
+      const originalBtnHTML = generatePromptBtn.innerHTML;
+      generatePromptBtn.disabled = true;
+      generatePromptBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>원고 정밀 분석 중...</span>`;
+
+      try {
+        let systemPrompt = '';
+        if (STATE.mode === 'infographic') {
+          systemPrompt = `You are an expert infographic designer and data visualization prompt engineer.
+Analyze the user's manuscript and synthesize it into a rich visual prompt for generating a high-quality Infographic.
+CRITICAL MANDATE: Focus heavily on structured DATA TABLES, CHARTS, DIAGRAMS, FLOWCHARTS, KEY METRIC BOXES, and CLEAN VECTOR TYPOGRAPHY.
+Describe layout structure, clear chart shapes, pie charts, bar graphs, clean modern colors, high readability header title placeholder.
+Return ONLY the finalized English prompt for AI image generation without preamble.`;
+        } else if (STATE.mode === 'comic') {
+          const styleDescriptions = {
+            ghibli: 'Studio Ghibli anime style, soft watercolor textures, lush scenery, hand-drawn warmth',
+            simple: 'simple minimalist 4-panel cartoon comic, clean line art, humorous expression, flat vibrant colors',
+            anime: 'vibrant Japanese anime art style, crisp detail, energetic lighting, manga comic panel',
+            webtoon: 'Korean webtoon style, semi-realistic realistic digital painting, crisp webtoon lighting'
+          };
+          const styleGuide = styleDescriptions[STATE.comicPreset] || styleDescriptions.ghibli;
+
+          systemPrompt = `You are a comic book storyboard creator and prompt engineer.
+Analyze the user's manuscript and transform it into a 4-PANEL COMIC STRIP (4컷 만화) story prompt.
+CRITICAL MANDATE:
+1. Must feature a clean 4-panel grid layout (4 equal comic frames).
+2. Style target: ${styleGuide}.
+3. Describe sequential story narrative across the 4 panels with clear character expressions and visual speech bubble placeholders.
+Return ONLY the finalized English prompt for AI image generation without preamble.`;
+        } else {
+          // Slide mode
+          systemPrompt = `You are an expert presentation designer and pitch deck prompt engineer.
+Analyze the user's manuscript and transform it into a high-impact presentation slide visual prompt.
+CRITICAL MANDATE:
+1. Professional presentation slide layout (16:9 widescreen orientation default).
+2. Feature an executive main title, structured content cards, key bullet points visual hierarchy, clean icons, and strong graphical layout.
+3. Modern, polished business/tech UI look with premium contrast.
+Return ONLY the finalized English prompt for AI image generation without preamble.`;
+        }
+
+        const userQuery = `[User Manuscript Text]:\n${manuscriptText}`;
+        
+        const payload = {
+          contents: [{ parts: [{ text: userQuery }] }],
+          systemInstruction: { parts: [{ text: systemPrompt }] }
+        };
+
+        const apiKey = ""; // Canvas runtime auto-injection
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+        const response = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        const generatedPromptText = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+        if (generatedPromptText) {
+          document.getElementById('prompt').value = generatedPromptText;
+          STATE.prompt = generatedPromptText;
+          showToast('원고 분석 기반 프롬프트가 생성되었습니다!', 'success');
+        } else {
+          throw new Error('프롬프트를 응답받지 못했습니다.');
+        }
+
+      } catch (error) {
+        console.error('Prompt Generation Error:', error);
+        showToast(`프롬프트 생성 실패: ${error.message}`, 'error');
+      } finally {
+        generatePromptBtn.disabled = false;
+        generatePromptBtn.innerHTML = originalBtnHTML;
+      }
+    }
+
+    /* ==========================================================================
+       STREAMING_CHUNK:Gemini Image Generation API Call (gemini-3.1-flash-image)...
+       ========================================================================== */
+    async function handleGenerateImage(targetMode) {
+      if (targetMode) {
+        setMode(targetMode);
+      }
+
+      let promptText = STATE.prompt.trim();
+      
+      if (!promptText && STATE.manuscript.trim()) {
+        await handleGeneratePrompt();
+        promptText = STATE.prompt.trim();
+      }
+
+      if (!promptText) {
+        showToast('프롬프트를 입력하거나 원고 자동 생성을 이용해주세요.', 'warning');
+        document.getElementById('prompt').focus();
+        return;
+      }
+
+      setButtonsLoading(true, STATE.mode);
+      showCanvasLoading(true);
+
+      try {
+        let formattedPrompt = '';
+        if (STATE.mode === 'infographic') {
+          formattedPrompt = `Professional high-end Infographic poster, focus on data charts, diagrams, tables, graph visualization, clear layout, modern vector art, clean typography, ${promptText}`;
+        } else if (STATE.mode === 'comic') {
+          const styleLabels = {
+            ghibli: 'Studio Ghibli aesthetic, hand-drawn anime watercolor style',
+            simple: 'simple minimal cartoon line art, cute webcomic',
+            anime: 'Japanese anime manga artwork, vivid crisp comic panels',
+            webtoon: 'Korean webtoon style, semi-realistic detailed shading'
+          };
+          const styleTag = styleLabels[STATE.comicPreset] || styleLabels.ghibli;
+          formattedPrompt = `A 4-panel comic strip (4컷 만화), 4 grid comic panel story, ${styleTag}, clear comic panel borders, speech bubbles placeholders, ${promptText}`;
+        } else {
+          // Slide mode
+          formattedPrompt = `Modern professional presentation slide, elegant pitch deck presentation layout, key points, title header, visual layout grid, high contrast business graphics, ${promptText}`;
+        }
+
+        const payload = {
+          contents: [{
+            role: 'user',
+            parts: [{ text: formattedPrompt }]
+          }],
+          generationConfig: {
+            responseModalities: ['IMAGE'],
+            imageConfig: {
+              aspectRatio: STATE.aspectRatio
+            }
+          }
+        };
+
+        const apiKey = ""; // Canvas runtime auto-injection
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+
+        const response = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        
+        const candidatePart = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+        if (!candidatePart || !candidatePart.inlineData?.data) {
+          throw new Error('이미지 데이터 응답을 받지 못했습니다.');
+        }
+
+        const mimeType = candidatePart.inlineData.mimeType || 'image/png';
+        const base64Data = candidatePart.inlineData.data;
+        const dataUrl = `data:${mimeType};base64,${base64Data}`;
+
+        const newGraphic = {
+          id: 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          dataUrl: dataUrl,
+          prompt: promptText,
+          mode: STATE.mode,
+          comicPreset: STATE.comicPreset,
+          aspectRatio: STATE.aspectRatio,
+          createdAt: new Date().toISOString()
+        };
+
+        displayGeneratedResult(newGraphic);
+        saveToHistory(newGraphic);
+        
+        showToast('새로운 AI 이미지가 성공적으로 생성되었습니다!', 'success');
+
+      } catch (error) {
+        console.error('Image Generation Error:', error);
+        showToast(`이미지 생성 실패: ${error.message}`, 'error');
+      } finally {
+        setButtonsLoading(false);
+        showCanvasLoading(false);
+      }
+    }
+
+    function setButtonsLoading(isLoading, activeMode) {
+      const infoBtn = document.getElementById('generateInfographicBtn');
+      const comicBtn = document.getElementById('generateComicBtn');
+      const slideBtn = document.getElementById('generateSlideBtn');
+
+      if (!infoBtn || !comicBtn || !slideBtn) return;
+
+      if (isLoading) {
+        infoBtn.disabled = true;
+        comicBtn.disabled = true;
+        slideBtn.disabled = true;
+        
+        infoBtn.classList.add('opacity-60', 'cursor-not-allowed');
+        comicBtn.classList.add('opacity-60', 'cursor-not-allowed');
+        slideBtn.classList.add('opacity-60', 'cursor-not-allowed');
+
+        if (activeMode === 'infographic') {
+          infoBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-base"></i><span>인포그래픽 생성 중...</span>`;
+        } else if (activeMode === 'comic') {
+          comicBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-base"></i><span>4컷 만화 생성 중...</span>`;
+        } else {
+          slideBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-base"></i><span>슬라이드 생성 중...</span>`;
+        }
+      } else {
+        infoBtn.disabled = false;
+        comicBtn.disabled = false;
+        slideBtn.disabled = false;
+
+        infoBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        comicBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        slideBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+
+        infoBtn.innerHTML = `<i class="fa-solid fa-chart-pie text-base"></i><span>📊 도표 인포그래픽 생성</span>`;
+        comicBtn.innerHTML = `<i class="fa-solid fa-book-open text-base"></i><span>🎨 4컷 만화 생성</span>`;
+        slideBtn.innerHTML = `<i class="fa-solid fa-desktop text-base"></i><span>🖥️️ 슬라이드 생성</span>`;
+      }
+    }
+
+    /* ==========================================================================
+       Canvas View Logic
+       ========================================================================== */
+    function showCanvasLoading(isLoading) {
+      const placeholderState = document.getElementById('placeholderState');
+      const loadingState = document.getElementById('loadingState');
+      const resultState = document.getElementById('resultState');
+      const resultToolbar = document.getElementById('resultToolbar');
+
+      if (isLoading) {
+        placeholderState.classList.add('hidden');
+        resultState.classList.add('hidden');
+        resultToolbar.classList.add('hidden');
+        loadingState.classList.remove('hidden');
+      } else {
+        loadingState.classList.add('hidden');
+      }
+    }
+
+    function displayGeneratedResult(item) {
+      STATE.currentImage = item;
+
+      const placeholderState = document.getElementById('placeholderState');
+      const resultState = document.getElementById('resultState');
+      const resultToolbar = document.getElementById('resultToolbar');
+      const renderedImage = document.getElementById('renderedImage');
+      const previewMeta = document.getElementById('previewMeta');
+      
+      placeholderState.classList.add('hidden');
+      resultState.classList.remove('hidden');
+      resultToolbar.classList.remove('hidden');
+      previewMeta.classList.remove('hidden');
+
+      renderedImage.src = item.dataUrl;
+      
+      let badgeLabel = '📊 도표 인포그래픽';
+      if (item.mode === 'comic') badgeLabel = `🎨 4컷 만화 (${item.comicPreset || '기본'})`;
+      if (item.mode === 'slide') badgeLabel = `🖥️ 프레젠테이션 슬라이드`;
+
+      document.getElementById('previewBadgeMode').textContent = badgeLabel;
+      document.getElementById('previewBadgeRatio').textContent = item.aspectRatio;
+      
+      const timeString = new Date(item.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('resultTime').textContent = `생성: ${timeString}`;
+    }
+
+    /* ==========================================================================
+       STREAMING_CHUNK:History & Local Storage Controller...
+       ========================================================================== */
+    function saveToHistory(item) {
+      STATE.history.unshift(item);
+      if (STATE.history.length > 35) {
+        STATE.history.pop();
+      }
+      persistHistory();
+      updateHistoryUI();
+    }
+
+    function persistHistory() {
+      try {
+        localStorage.setItem('visual_studio_history', JSON.stringify(STATE.history));
+      } catch (e) {
+        console.warn('LocalStorage quota limit:', e);
+      }
+    }
+
+    function loadHistoryFromStorage() {
+      try {
+        const saved = localStorage.getItem('visual_studio_history');
+        if (saved) {
+          STATE.history = JSON.parse(saved);
+        }
+      } catch (e) {
+        STATE.history = [];
+      }
+    }
+
+    function updateHistoryUI() {
+      const historyGrid = document.getElementById('historyGrid');
+      const emptyHistoryState = document.getElementById('emptyHistoryState');
+      const historyBadge = document.getElementById('historyBadge');
+      
+      historyBadge.textContent = STATE.history.length;
+
+      if (STATE.history.length === 0) {
+        historyGrid.innerHTML = '';
+        emptyHistoryState.classList.remove('hidden');
+        updateBatchDownloadBtn();
+        return;
+      }
+
+      emptyHistoryState.classList.add('hidden');
+
+      historyGrid.innerHTML = STATE.history.map(item => {
+        const isChecked = STATE.selectedIds.has(item.id);
+        const formattedDate = new Date(item.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        
+        let typeBadge = '📊 도표 인포그래픽';
+        if (item.mode === 'comic') typeBadge = `🎨 4컷 만화 (${item.comicPreset || '만화'})`;
+        if (item.mode === 'slide') typeBadge = `🖥️ 슬라이드`;
+
+        return `
+          <div class="group relative glass-panel bg-white/70 dark:bg-slate-900/70 border ${isChecked ? 'border-indigo-500 ring-2 ring-indigo-500/30' : 'border-slate-200/80 dark:border-slate-800'} rounded-2xl overflow-hidden shadow-apple dark:shadow-apple-dark transition duration-200 flex flex-col">
+            
+            <!-- Checkbox -->
+            <div class="absolute top-2.5 left-2.5 z-10">
+              <input type="checkbox" onchange="toggleItemSelection('${item.id}')" ${isChecked ? 'checked' : ''}
+                class="w-5 h-5 rounded-md border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-white dark:bg-slate-900 cursor-pointer">
+            </div>
+
+            <!-- Image View -->
+            <div class="relative w-full h-44 bg-slate-100 dark:bg-slate-950 flex items-center justify-center overflow-hidden cursor-pointer" onclick="openModal('${item.id}')">
+              <img src="${item.dataUrl}" alt="History Card" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+              <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition flex items-end p-3">
+                <span class="text-xs text-white font-medium flex items-center gap-1">
+                  <i class="fa-solid fa-expand"></i> 크게 보기
+                </span>
+              </div>
+            </div>
+
+            <!-- Card Info -->
+            <div class="p-3.5 flex-1 flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 truncate">
+                  ${typeBadge}
+                </span>
+                <span class="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-md font-mono">
+                  ${item.aspectRatio}
+                </span>
+              </div>
+
+              <p class="text-xs text-slate-600 dark:text-slate-300 line-clamp-2" title="${escapeHtml(item.prompt)}">
+                ${escapeHtml(item.prompt)}
+              </p>
+
+              <div class="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-slate-400">
+                <span class="text-[10px]">${formattedDate}</span>
+                <div class="flex items-center space-x-1">
+                  <button onclick="downloadSingleItem('${item.id}')" title="PNG 다운로드" class="p-1.5 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition">
+                    <i class="fa-solid fa-download text-xs"></i>
+                  </button>
+                  <button onclick="deleteHistoryItem('${item.id}')" title="삭제" class="p-1.5 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition">
+                    <i class="fa-solid fa-trash text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+
+      updateBatchDownloadBtn();
+    }
+
+    /* ==========================================================================
+       ZIP Archive Generation Logic
+       ========================================================================== */
+    function toggleItemSelection(id) {
+      if (STATE.selectedIds.has(id)) {
+        STATE.selectedIds.delete(id);
+      } else {
+        STATE.selectedIds.add(id);
+      }
+      updateHistoryUI();
+    }
+
+    function toggleSelectAll() {
+      if (STATE.selectedIds.size === STATE.history.length) {
+        STATE.selectedIds.clear();
+      } else {
+        STATE.history.forEach(item => STATE.selectedIds.add(item.id));
+      }
+      
+      const selectAllText = document.getElementById('selectAllText');
+      selectAllText.textContent = STATE.selectedIds.size === STATE.history.length ? '선택 해제' : '전체 선택';
+      
+      updateHistoryUI();
+    }
+
+    function updateBatchDownloadBtn() {
+      const btn = document.getElementById('downloadZipBtn');
+      const badge = document.getElementById('selectedCountBadge');
+      const count = STATE.selectedIds.size;
+      
+      badge.textContent = count;
+      btn.disabled = count === 0;
+    }
+
+    async function downloadSelectedZip() {
+      if (STATE.selectedIds.size === 0) return;
+
+      const itemsToZip = STATE.history.filter(item => STATE.selectedIds.has(item.id));
+      const downloadZipBtn = document.getElementById('downloadZipBtn');
+      const originalHTML = downloadZipBtn.innerHTML;
+
+      downloadZipBtn.disabled = true;
+      downloadZipBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> ZIP 압축 생성 중...`;
+
+      try {
+        const zip = new JSZip();
+        const folder = zip.folder("AI_Graphics_Export");
+
+        itemsToZip.forEach((item, index) => {
+          const base64Data = item.dataUrl.split(',')[1];
+          let modeName = 'Infographic';
+          if (item.mode === 'comic') modeName = 'Comic';
+          if (item.mode === 'slide') modeName = 'Slide';
+
+          const fileName = `${modeName}_${index + 1}_${item.aspectRatio.replace(':', '-')}_${item.id}.png`;
+          folder.file(fileName, base64Data, { base64: true });
+        });
+
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        saveAs(zipBlob, `AI_Graphics_Batch_${Date.now()}.zip`);
+        
+        showToast(`${itemsToZip.length}개 파일이 ZIP으로 압축 다운로드되었습니다.`, 'success');
+      } catch (err) {
+        console.error('ZIP packaging error:', err);
+        showToast('ZIP 생성 중 오류 발생', 'error');
+      } finally {
+        downloadZipBtn.disabled = false;
+        downloadZipBtn.innerHTML = originalHTML;
+      }
+    }
+
+    function downloadSingleItem(id) {
+      const item = STATE.history.find(h => h.id === id);
+      if (!item) return;
+
+      const link = document.createElement('a');
+      link.href = item.dataUrl;
+      
+      let modeName = 'Infographic';
+      if (item.mode === 'comic') modeName = 'Comic';
+      if (item.mode === 'slide') modeName = 'Slide';
+
+      link.download = `${modeName}_${item.aspectRatio.replace(':', '-')}_${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('PNG 파일이 다운로드되었습니다.');
+    }
+
+    function downloadCurrentImage() {
+      if (STATE.currentImage) {
+        downloadSingleItem(STATE.currentImage.id);
+      }
+    }
+
+    function deleteHistoryItem(id) {
+      STATE.history = STATE.history.filter(item => item.id !== id);
+      STATE.selectedIds.delete(id);
+      persistHistory();
+      updateHistoryUI();
+      showToast('항목이 삭제되었습니다.');
+    }
+
+    function confirmClearHistory() {
+      if (STATE.history.length === 0) return;
+      if (confirm('모든 히스토리 내역을 삭제하시겠습니까?')) {
+        STATE.history = [];
+        STATE.selectedIds.clear();
+        persistHistory();
+        updateHistoryUI();
+        showToast('전체 히스토리가 삭제되었습니다.');
+      }
+    }
+
+    /* ==========================================================================
+       Modal & Utilities
+       ========================================================================== */
+    function openModal(id) {
+      const item = STATE.history.find(h => h.id === id);
+      if (!item) return;
+
+      document.getElementById('modalImg').src = item.dataUrl;
+      document.getElementById('modalPrompt').textContent = item.prompt;
+      
+      let typeBadge = '📊 도표 인포그래픽';
+      if (item.mode === 'comic') typeBadge = `🎨 4컷 만화 (${item.comicPreset || '웹툰'})`;
+      if (item.mode === 'slide') typeBadge = `🖥️ 프레젠테이션 슬라이드`;
+
+      document.getElementById('modalTypeBadge').textContent = typeBadge;
+      document.getElementById('modalRatioBadge').textContent = item.aspectRatio;
+      document.getElementById('modalDate').textContent = new Date(item.createdAt).toLocaleString('ko-KR');
+
+      const modalDownloadBtn = document.getElementById('modalDownloadBtn');
+      modalDownloadBtn.onclick = () => downloadSingleItem(item.id);
+
+      document.getElementById('imageModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('imageModal').classList.add('hidden');
+    }
+
+    function copyCurrentPrompt() {
+      if (!STATE.prompt) return;
+      
+      const el = document.createElement('textarea');
+      el.value = STATE.prompt;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+
+      showToast('프롬프트가 클립보드에 복사되었습니다.');
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastMessage.textContent = message;
+
+      if (type === 'error') {
+        toastIcon.innerHTML = `<i class="fa-solid fa-circle-exclamation text-rose-400"></i>`;
+      } else if (type === 'warning') {
+        toastIcon.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i>`;
+      } else if (type === 'success') {
+        toastIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i>`;
+      } else {
+        toastIcon.innerHTML = `<i class="fa-solid fa-circle-info text-indigo-400"></i>`;
+      }
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3500);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    async function fetchWithRetry(url, options, maxRetries = 3) {
+      let delay = 1000;
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          const res = await fetch(url, options);
+          if (res.ok) return res;
+          if (res.status === 429 && i < maxRetries - 1) {
+            await new Promise(r => setTimeout(r, delay));
+            delay *= 2;
+            continue;
+          }
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `API 요청 오류 (${res.status})`);
+        } catch (err) {
+          if (i === maxRetries - 1) throw err;
+          await new Promise(r => setTimeout(r, delay));
+          delay *= 2;
+        }
+      }
+    }
+  </script>
+</body>
+</html>
